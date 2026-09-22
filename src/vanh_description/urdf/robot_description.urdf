@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <robot
-  name="orion_urdf">
+  name="vanh_description">
 
   <link name="base_link">
   </link>
@@ -27,7 +27,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://orion_urdf/meshes/chassis_link.STL" />
+          filename="package://vanh_description/meshes/chassis_link.STL" />
       </geometry>
       <material
         name="">
@@ -41,7 +41,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://orion_urdf/meshes/chassis_link.STL" />
+          filename="package://vanh_description/meshes/chassis_link.STL" />
       </geometry>
     </collision>
   </link>
@@ -76,7 +76,7 @@
         rpy="0 0 -3.14159" />
       <geometry>
         <mesh
-          filename="package://orion_urdf/meshes/lidar_link.STL" />
+          filename="package://vanh_description/meshes/lidar_link.STL" />
       </geometry>
       <material
         name="">
@@ -90,7 +90,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://orion_urdf/meshes/lidar_link.STL" />
+          filename="package://vanh_description/meshes/lidar_link.STL" />
       </geometry>
     </collision>
   </link>
@@ -129,7 +129,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://orion_urdf/meshes/left_camera_link.STL" />
+          filename="package://vanh_description/meshes/left_camera_link.STL" />
       </geometry>
       <material
         name="">
@@ -143,7 +143,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://orion_urdf/meshes/left_camera_link.STL" />
+          filename="package://vanh_description/meshes/left_camera_link.STL" />
       </geometry>
     </collision>
   </link>
@@ -182,7 +182,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://orion_urdf/meshes/right_camera_link.STL" />
+          filename="package://vanh_description/meshes/right_camera_link.STL" />
       </geometry>
       <material
         name="">
@@ -196,7 +196,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://orion_urdf/meshes/right_camera_link.STL" />
+          filename="package://vanh_description/meshes/right_camera_link.STL" />
       </geometry>
     </collision>
   </link>
@@ -235,7 +235,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://orion_urdf/meshes/front_left_link_1.STL" />
+          filename="package://vanh_description/meshes/front_left_link_1.STL" />
       </geometry>
       <material
         name="">
@@ -249,7 +249,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://orion_urdf/meshes/front_left_link_1.STL" />
+          filename="package://vanh_description/meshes/front_left_link_1.STL" />
       </geometry>
     </collision>
   </link>
@@ -293,7 +293,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://orion_urdf/meshes/front_left_link_2.STL" />
+          filename="package://vanh_description/meshes/front_left_link_2.STL" />
       </geometry>
       <material
         name="">
@@ -307,7 +307,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://orion_urdf/meshes/front_left_link_2.STL" />
+          filename="package://vanh_description/meshes/front_left_link_2.STL" />
       </geometry>
     </collision>
   </link>
@@ -351,7 +351,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://orion_urdf/meshes/front_left_link_3.STL" />
+          filename="package://vanh_description/meshes/front_left_link_3.STL" />
       </geometry>
       <material
         name="">
@@ -365,7 +365,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://orion_urdf/meshes/front_left_link_3.STL" />
+          filename="package://vanh_description/meshes/front_left_link_3.STL" />
       </geometry>
     </collision>
   </link>
@@ -409,7 +409,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://orion_urdf/meshes/back_left_link_1.STL" />
+          filename="package://vanh_description/meshes/back_left_link_1.STL" />
       </geometry>
       <material
         name="">
@@ -423,7 +423,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://orion_urdf/meshes/back_left_link_1.STL" />
+          filename="package://vanh_description/meshes/back_left_link_1.STL" />
       </geometry>
     </collision>
   </link>
@@ -467,7 +467,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://orion_urdf/meshes/back_left_link_2.STL" />
+          filename="package://vanh_description/meshes/back_left_link_2.STL" />
       </geometry>
       <material
         name="">
@@ -481,7 +481,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://orion_urdf/meshes/back_left_link_2.STL" />
+          filename="package://vanh_description/meshes/back_left_link_2.STL" />
       </geometry>
     </collision>
   </link>
@@ -525,7 +525,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://orion_urdf/meshes/back_left_link_3.STL" />
+          filename="package://vanh_description/meshes/back_left_link_3.STL" />
       </geometry>
       <material
         name="">
@@ -539,7 +539,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://orion_urdf/meshes/back_left_link_3.STL" />
+          filename="package://vanh_description/meshes/back_left_link_3.STL" />
       </geometry>
     </collision>
   </link>
@@ -583,7 +583,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://orion_urdf/meshes/back_right_link_1.STL" />
+          filename="package://vanh_description/meshes/back_right_link_1.STL" />
       </geometry>
       <material
         name="">
@@ -597,7 +597,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://orion_urdf/meshes/back_right_link_1.STL" />
+          filename="package://vanh_description/meshes/back_right_link_1.STL" />
       </geometry>
     </collision>
   </link>
@@ -641,7 +641,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://orion_urdf/meshes/back_right_link_2.STL" />
+          filename="package://vanh_description/meshes/back_right_link_2.STL" />
       </geometry>
       <material
         name="">
@@ -655,7 +655,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://orion_urdf/meshes/back_right_link_2.STL" />
+          filename="package://vanh_description/meshes/back_right_link_2.STL" />
       </geometry>
     </collision>
   </link>
@@ -699,7 +699,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://orion_urdf/meshes/back_right_link_3.STL" />
+          filename="package://vanh_description/meshes/back_right_link_3.STL" />
       </geometry>
       <material
         name="">
@@ -713,7 +713,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://orion_urdf/meshes/back_right_link_3.STL" />
+          filename="package://vanh_description/meshes/back_right_link_3.STL" />
       </geometry>
     </collision>
   </link>
@@ -757,7 +757,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://orion_urdf/meshes/front_right_link_1.STL" />
+          filename="package://vanh_description/meshes/front_right_link_1.STL" />
       </geometry>
       <material
         name="">
@@ -771,7 +771,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://orion_urdf/meshes/front_right_link_1.STL" />
+          filename="package://vanh_description/meshes/front_right_link_1.STL" />
       </geometry>
     </collision>
   </link>
@@ -815,7 +815,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://orion_urdf/meshes/front_right_link_2.STL" />
+          filename="package://vanh_description/meshes/front_right_link_2.STL" />
       </geometry>
       <material
         name="">
@@ -829,7 +829,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://orion_urdf/meshes/front_right_link_2.STL" />
+          filename="package://vanh_description/meshes/front_right_link_2.STL" />
       </geometry>
     </collision>
   </link>
@@ -873,7 +873,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://orion_urdf/meshes/front_right_link_3.STL" />
+          filename="package://vanh_description/meshes/front_right_link_3.STL" />
       </geometry>
       <material
         name="">
@@ -887,7 +887,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://orion_urdf/meshes/front_right_link_3.STL" />
+          filename="package://vanh_description/meshes/front_right_link_3.STL" />
       </geometry>
     </collision>
   </link>
@@ -931,7 +931,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://orion_urdf/meshes/lid_link.STL" />
+          filename="package://vanh_description/meshes/lid_link.STL" />
       </geometry>
       <material
         name="">
@@ -945,7 +945,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://orion_urdf/meshes/lid_link.STL" />
+          filename="package://vanh_description/meshes/lid_link.STL" />
       </geometry>
     </collision>
   </link>
