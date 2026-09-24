@@ -6,7 +6,6 @@ from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterValue
 from launch_ros.substitutions import FindPackageShare
 
-
 def generate_launch_description():
     # Get URDF via xacro
     robot_description_content = Command(
@@ -62,8 +61,8 @@ def generate_launch_description():
     return LaunchDescription(
         [
             robot_state_publisher,
-            joint_state_publisher_gui,
-            # joint_state_publisher,
+            # joint_state_publisher_gui,
+            joint_state_publisher,
             rviz,
         ]
     )
