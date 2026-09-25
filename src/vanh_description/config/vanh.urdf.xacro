@@ -4,6 +4,6 @@
   xmlns:xacro="http://www.ros.org/wiki/xacro"
   name="vanh">
 
-  <xacro:include filename="../urdf/robot_description.urdf"/>
+  <xacro:include filename="../urdf/robot_reinforcement.urdf"/>
 
 </robot>

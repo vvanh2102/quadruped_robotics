@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(vanh_description)
+project(vanh_ros_control)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -22,10 +22,5 @@ if(BUILD_TESTING)
   set(ament_cmake_cpplint_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
 endif()
-
-install(
-  DIRECTORY meshes urdf rviz config param launch meshes_rl
-  DESTINATION share/${PROJECT_NAME}
-)
 
 ament_package()
