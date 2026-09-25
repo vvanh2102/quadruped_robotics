@@ -1,0 +1,3 @@
+[console_scripts]
+ros_control_node = vanh_ros_control.ros_control_node:main
+

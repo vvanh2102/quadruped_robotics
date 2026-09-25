@@ -1,0 +1,22 @@
+running develop
+running egg_info
+creating vanh_ros_control.egg-info
+writing vanh_ros_control.egg-info/PKG-INFO
+writing dependency_links to vanh_ros_control.egg-info/dependency_links.txt
+writing entry points to vanh_ros_control.egg-info/entry_points.txt
+writing requirements to vanh_ros_control.egg-info/requires.txt
+writing top-level names to vanh_ros_control.egg-info/top_level.txt
+writing manifest file 'vanh_ros_control.egg-info/SOURCES.txt'
+reading manifest file 'vanh_ros_control.egg-info/SOURCES.txt'
+writing manifest file 'vanh_ros_control.egg-info/SOURCES.txt'
+running build_ext
+Creating /home/v005101/Documents/quadruped_robotics/src/install/vanh_ros_control/lib/python3.10/site-packages/vanh-ros-control.egg-link (link to .)
+Installing ros_control_node script to /home/v005101/Documents/quadruped_robotics/src/install/vanh_ros_control/lib/vanh_ros_control
+
+Installed /home/v005101/Documents/quadruped_robotics/src/build/vanh_ros_control
+running symlink_data
+creating /home/v005101/Documents/quadruped_robotics/src/install/vanh_ros_control/share/ament_index
+creating /home/v005101/Documents/quadruped_robotics/src/install/vanh_ros_control/share/ament_index/resource_index
+creating /home/v005101/Documents/quadruped_robotics/src/install/vanh_ros_control/share/ament_index/resource_index/packages
+symbolically linking /home/v005101/Documents/quadruped_robotics/src/build/vanh_ros_control/resource/vanh_ros_control -> /home/v005101/Documents/quadruped_robotics/src/install/vanh_ros_control/share/ament_index/resource_index/packages
+symbolically linking /home/v005101/Documents/quadruped_robotics/src/build/vanh_ros_control/package.xml -> /home/v005101/Documents/quadruped_robotics/src/install/vanh_ros_control/share/vanh_ros_control
