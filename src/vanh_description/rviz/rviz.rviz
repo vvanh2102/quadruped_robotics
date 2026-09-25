@@ -4,11 +4,21 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
-        - /Global Options1
-        - /Status1
         - /Model1
-        - /Model1/TF1
-      Splitter Ratio: 0.5588235259056091
+        - /Model1/TF1/Tree1/trunk1
+        - /Model1/TF1/Tree1/trunk1/FL_hip1
+        - /Model1/TF1/Tree1/trunk1/FL_hip1/FL_thigh1
+        - /Model1/TF1/Tree1/trunk1/FL_hip1/FL_thigh1/FL_calf1
+        - /Model1/TF1/Tree1/trunk1/FR_hip1
+        - /Model1/TF1/Tree1/trunk1/FR_hip1/FR_thigh1
+        - /Model1/TF1/Tree1/trunk1/FR_hip1/FR_thigh1/FR_calf1
+        - /Model1/TF1/Tree1/trunk1/RL_hip1
+        - /Model1/TF1/Tree1/trunk1/RL_hip1/RL_thigh1
+        - /Model1/TF1/Tree1/trunk1/RL_hip1/RL_thigh1/RL_calf1
+        - /Model1/TF1/Tree1/trunk1/RR_hip1
+        - /Model1/TF1/Tree1/trunk1/RR_hip1/RR_thigh1
+        - /Model1/TF1/Tree1/trunk1/RR_hip1/RR_thigh1/RR_calf1
+      Splitter Ratio: 0.7176470756530762
     Tree Height: 719
   - Class: rviz_common/Selection
     Name: Selection
@@ -31,24 +41,6 @@ Panels:
 Visualization Manager:
   Class: ""
   Displays:
-    - Alpha: 0.5
-      Cell Size: 1
-      Class: rviz_default_plugins/Grid
-      Color: 160; 160; 164
-      Enabled: true
-      Line Style:
-        Line Width: 0.029999999329447746
-        Value: Lines
-      Name: Grid
-      Normal Cell Count: 0
-      Offset:
-        X: 0
-        Y: 0
-        Z: 0
-      Plane: XY
-      Plane Cell Count: 10
-      Reference Frame: <Fixed Frame>
-      Value: true
     - Class: rviz_common/Group
       Displays:
         - Alpha: 1
@@ -266,12 +258,30 @@ Visualization Manager:
                 {}
           Update Interval: 0
           Value: true
+        - Alpha: 0.5
+          Cell Size: 1
+          Class: rviz_default_plugins/Grid
+          Color: 160; 160; 164
+          Enabled: true
+          Line Style:
+            Line Width: 0.029999999329447746
+            Value: Lines
+          Name: Grid
+          Normal Cell Count: 0
+          Offset:
+            X: 0
+            Y: 0
+            Z: 0
+          Plane: XY
+          Plane Cell Count: 10
+          Reference Frame: <Fixed Frame>
+          Value: true
       Enabled: true
       Name: Model
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
-    Fixed Frame: lid_link
+    Fixed Frame: trunk
     Frame Rate: 30
   Name: root
   Tools:
@@ -314,25 +324,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 0.9241166710853577
+      Distance: 0.9300300478935242
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -0.030256332829594612
-        Y: -0.06244755908846855
-        Z: 0.12324748933315277
+        X: -0.03417174518108368
+        Y: -0.046745020896196365
+        Z: -0.014361677691340446
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: -0.009602008387446404
+      Pitch: 0.1703971028327942
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 1.2954000234603882
+      Yaw: 1.0404036045074463
     Saved: ~
 Window Geometry:
   Displays:
@@ -350,5 +360,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1920
-  X: 0
-  Y: 27
+  X: 379
+  Y: 258
