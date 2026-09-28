@@ -15,6 +15,8 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   # CONTROL 
   "msg/JointState.msg"
   "msg/RobotInformation.msg"
+  "msg/ManualControl.msg"
+  "msg/AutoControl.msg"
 
   # BACKEND - CONTROL
   "srv/ChangeMode.srv"

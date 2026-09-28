@@ -3,6 +3,7 @@ from vanh_msgs.msg import RobotInformation
 from vanh_msgs.srv import ChangeMode
 
 class ROBOT_JOINT_STATES:
+    NUM_JOINTS = 12
     FRONT_LEFT_JOINT_1  = 0
     FRONT_LEFT_JOINT_2  = 1
     FRONT_LEFT_JOINT_3  = 2
@@ -17,15 +18,21 @@ class ROBOT_JOINT_STATES:
     BACK_RIGHT_JOINT_3  = 11
 
 class ROBOT_MODE:
-    MODE_MANUAL_PS5  = 0
-    MODE_AUTO    = 1
-    MODE_PAUSE   = 2
+    MODE_MANUAL_PS5     = 0
+    MODE_AUTO           = 1
+    MODE_PAUSE          = 2
     MODE_CHARGE_BATTERY = 3
-    MODE_UNKNOWN = 100
+    MODE_UNKNOWN        = 100
+    MODE_IDLE           = 255
 
 class ROBOT_TEST_STAGE:
     NONE        = 0
     TRIGGER     = 1
     DONE        = 2
 
-
+MODE_MAPPING = {
+    ChangeMode.Request.MODE_MANUAL_PS5: ROBOT_MODE.MODE_MANUAL_PS5,
+    ChangeMode.Request.MODE_AUTO: ROBOT_MODE.MODE_AUTO,
+    ChangeMode.Request.MODE_PAUSE: ROBOT_MODE.MODE_PAUSE,
+    ChangeMode.Request.MODE_CHARGE_BATTERY: ROBOT_MODE.MODE_CHARGE_BATTERY,
+}
