@@ -1,9 +1,24 @@
-int8[] joints
 int8[] actions
 
+int8 FRONT_LEFT_JOINT_1  = 0
+int8 FRONT_LEFT_JOINT_2  = 1
+int8 FRONT_LEFT_JOINT_3  = 2
+int8 FRONT_RIGHT_JOINT_1 = 3
+int8 FRONT_RIGHT_JOINT_2 = 4
+int8 FRONT_RIGHT_JOINT_3 = 5
+int8 BACK_LEFT_JOINT_1   = 6
+int8 BACK_LEFT_JOINT_2   = 7
+int8 BACK_LEFT_JOINT_3   = 8
+int8 BACK_RIGHT_JOINT_1  = 9
+int8 BACK_RIGHT_JOINT_2  = 10
+int8 BACK_RIGHT_JOINT_3  = 11
 
 int8 STOP = 0
 int8 FORWARD = 1
 int8 BACKWARD = -1
-int8 LEFT = 2
-int8 RIGHT = -2
+int8 MOVE_LEFT = 2
+int8 MOVE_RIGHT = -2
+int8 TURN_LEFT = 3
+int8 TURN_RIGHT = -3
+int8 CROUCH = 4
+int8 STAND = 5

@@ -17,10 +17,12 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/RobotInformation.msg"
   "msg/ManualControl.msg"
   "msg/AutoControl.msg"
+  "msg/Stm32Status.msg"
 
   # BACKEND - CONTROL
   "srv/ChangeMode.srv"
-  
+  "srv/SetJointAngle.srv"
+
   DEPENDENCIES builtin_interfaces
 )
 

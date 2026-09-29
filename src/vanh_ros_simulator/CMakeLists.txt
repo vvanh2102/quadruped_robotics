@@ -7,9 +7,20 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
-# uncomment the following section in order to fill in
-# further dependencies manually.
-# find_package(<dependency> REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(vanh_msgs REQUIRED)
+
+add_executable(simulator_node src/simulator_node.cpp)
+target_include_directories(simulator_node PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>)
+target_compile_features(simulator_node PUBLIC cxx_std_17)
+ament_target_dependencies(simulator_node rclcpp sensor_msgs vanh_msgs)
+
+install(TARGETS simulator_node DESTINATION lib/${PROJECT_NAME})
+install(DIRECTORY launch param DESTINATION share/${PROJECT_NAME})
+
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

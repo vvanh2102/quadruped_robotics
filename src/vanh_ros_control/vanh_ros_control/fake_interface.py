@@ -1,7 +1,9 @@
 #!/usr/bin/python3
+from vanh_ros_control.utils import runInThread
 from vanh_ros_control.robot_define import ROBOT_JOINT_STATES
+from vanh_msgs.srv import ChangeMode
 
-from math import pi, sqrt
+from math import isfinite, pi, sqrt
 from time import sleep, time
 from typing import Tuple
 
@@ -57,13 +59,15 @@ class ROBOT_SPEED:
 class Sim_Interface:
     def __init__(self) -> None:
         self.mode = 255
+        self.version = 1 
+        self.error = []                   
+        self.device = [False] * 2
+
         self.joint_action = [0.0] * ROBOT_JOINT_STATES.NUM_JOINTS
         self.joint_state = [0.0] * ROBOT_JOINT_STATES.NUM_JOINTS
 
-        self.__manual = [0.0] * ROBOT_JOINT_STATES.NUM_JOINTS
-        self.__auto = [0.0] * ROBOT_JOINT_STATES.NUM_JOINTS
-        self.__fake = [0.0] * ROBOT_JOINT_STATES.NUM_JOINTS
         self.__target = [0.0] * ROBOT_JOINT_STATES.NUM_JOINTS
+        self.__updateStatus()
 
     # METHOD
     def connected(self) -> bool:
@@ -78,3 +82,61 @@ class Sim_Interface:
         """
         self.mode = mode
         return True, ""
+
+    def controlDevice(self, indexs: list, enables: list) -> bool:
+        """
+        Control devices
+        """
+        for i in range(indexs.__len__()):
+            self.device[indexs[i]] = enables[i]
+        return True
+    
+    def controlManualJoint(self, positions: list) -> bool:
+        """
+        Control joints manually (joints in radian)
+        """
+        if len(positions) != ROBOT_JOINT_STATES.NUM_JOINTS:
+            print(f"Invalid joint positions length: {len(positions)}, expected: {ROBOT_JOINT_STATES.NUM_JOINTS}")
+            return False
+        
+        for i in range(ROBOT_JOINT_STATES.NUM_JOINTS):
+            angle = positions[i]
+            low, high = ROBOT_LIMIT.JOINTS_ORDER[i]
+            if not isfinite(angle) or angle < low or angle > high:
+                print(f"Invalid joint angle: {angle} for joint {i}, limits: {low} to {high}")
+                return False
+
+        self.__target = list(positions)
+        return True
+
+    @staticmethod
+    def __limit(value: float, limits: tuple) -> float:
+        """
+        Return value inside [min, max]
+        """
+        return min(max(value, limits[0]), limits[1])
+
+    @runInThread
+    def __updateStatus(self):
+        last = time()
+
+        while True:
+            now = time()
+            dt = now - last
+            last = now
+
+            for i in range(ROBOT_JOINT_STATES.NUM_JOINTS):
+                current = self.joint_state[i]
+                target = self.__target[i]
+                speed = ROBOT_SPEED.JOINTS_ORDER[i]
+                limits = ROBOT_LIMIT.JOINTS_ORDER[i]
+                step = min(dt * speed, abs(target - current))
+
+                if target > current:
+                    current += step
+                elif target < current:
+                    current -= step
+
+                self.joint_state[i] = self.__limit(current, limits)
+
+            sleep(0.05)

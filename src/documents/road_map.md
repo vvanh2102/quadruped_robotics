@@ -7,13 +7,32 @@ Convention:
 
 ---
 
+## Current status (updated 2026-09-29)
+
+**Done:** `vanh_msgs` (`JointState`, `RobotInformation`, `Stm32Status`, `ManualControl`, `ChangeMode.srv`); `vanh_ros_control` (`Sim_Interface` + `ros_control_node`, publishes `/robot_info`, accepts `/joint_command`).
+
+**Current step — `/robot_info` → `/joint_states` bridge in `vanh_ros_simulator`:**
+- [x] `simulator_node.h` / `simulator_node.cpp` skeleton (Nishio style: `setup()`, `initParam()`, `log()`), `param/config.yaml` with the 12 joint names
+- [ ] Fix `simulator_node` (see review 2026-09-29: `setup()` never called, undefined `robot_joints_`, wrong size check, bad `%s` logging, unused publish thread)
+- [ ] `CMakeLists.txt`: build/install `simulator_node`, install `launch/` and `param/`
+- [ ] `package.xml`: dependencies
+- [ ] `launch/simulator.launch.py`: `robot_state_publisher` + `ros_control_node` + `simulator_node` (with `config.yaml`) + RViz — no `joint_state_publisher`
+- [ ] `vanh_description/rviz/rviz.rviz`: `Fixed Frame` → `base_link` (currently `trunk`, which does not exist in `robot_description.urdf`)
+- [ ] Verify in RViz: a `/joint_command` moves the expected legs, right-side joints turn opposite to left as per URDF axes
+
+**Next step — gait planner:** consume `/manual` (`ManualControl`), turn body actions into 12 joint angles over time, publish `/joint_command`. Leg IK from Orion (`LegIK.cpp`, `kinematics.py`). Wire robot mode (`/change_mode`) at the same time — see the deferred mode item under `vanh_ros_control`.
+
+Run note: a Nishio stack may be running on this machine and also publishes `/robot_info` (different type) — use `export ROS_DOMAIN_ID=42` in every terminal.
+
+---
+
 ## 1. vanh_ros_simulator
 Role: main brain — URDF/ros2_control, MoveIt, trajectory execution. Equivalent to `nishio_ros2_moveit2`, used for planning/preview only, does not directly drive real hardware. Package name on disk: `vanh_ros_simulator` (already exists as an empty skeleton in `src/`).
 
 **First concrete step (locked 2026-09-25):** subscribe `/robot_info` (published by `vanh_ros_control`), map its 12 feedback angles to the correct URDF joint names, republish as `sensor_msgs/JointState` on `/joint_states` for `robot_state_publisher` → RViz. When this node runs, `joint_state_publisher`/`joint_state_publisher_gui` in `view_model.launch.py` must be disabled — only one publisher on `/joint_states` at a time.
 
 - [~] `/robot_info` → `/joint_states` bridge node (see design below)
-- [ ] Confirm ROS 2 distro (Humble/Jazzy) before writing code
+- [x] Confirm ROS 2 distro — **Humble** (`/opt/ros/humble`)
 - [ ] Add `<ros2_control>` block to xacro (12 joints, `command_interface position`, `state_interface position`)
 - [ ] Use `mock_components/GenericSystem` as the hardware plugin for now (not real hardware)
 - [ ] Write `controllers.yaml`: `joint_trajectory_controller` + `joint_state_broadcaster`
@@ -28,12 +47,19 @@ Role: hardware/sim communication — does NOT use ros2_control. Plain rclpy/rclc
 
 **`/robot_info` schema (locked 2026-09-25):** dedicated message, feedback only (never carries commanded angles — commands are a separate topic/service, added later alongside PS5 manual/auto mode). Fields: `header`/timestamp + 12 joint angles in **rad**. `vanh_ros_control` is the only publisher, in both Sim and STM32 mode — RViz must see the same real feedback path regardless of mode. Bootstrap/test plan: manually publish a sample `/robot_info` message before PS5 or STM32 exist, to validate the bridge in `vanh_ros_simulator` end to end.
 
-- [~] Define `/robot_info` message (header + 12x float64 positions, rad, feedback-only) — equivalent to Nishio's `RobotInformation`
-- [ ] Define command message/service for manual/auto mode later — equivalent to Nishio's `AutoControl`/`ManualControl` (deferred, not blocking `/joint_states`)
-- [ ] `Sim_Interface`: numeric joint simulation (angle limits, interpolated speed) — no physics engine needed, runnable right away
-- [ ] Main node: publish `/robot_info` on a timer, pick interface (Sim/STM32) via `simulation` param
+- [x] Define `/robot_info` message — `RobotInformation.msg` = `builtin_interfaces/Time stamp` + `JointState joint` (`float32[] positions`, rad) + `Stm32Status stm32` (`software_version`, `connection`, `errors`) + `bool[] devices` (`SERVO_POWER`, `LIDAR_POWER`). Equivalent to Nishio's `RobotInformation` / `PlcStatus`.
+- [~] Command messages — `ManualControl.msg` defined (body-level `int8[] actions`: `FORWARD`, `MOVE_LEFT`, `TURN_LEFT`, `CROUCH`, `STAND`...); its consumer is the gait planner, not written yet. `AutoControl.msg` still empty until "auto" is defined.
+- [x] `Sim_Interface` (`fake_interface.py`) — per-joint limits (`ROBOT_LIMIT`, from `robot_reinforcement.urdf`) and speed (`ROBOT_SPEED`, 6.5 rad/s placeholder until servo chosen); `controlManualJoint()` validates length/range and rejects the whole command on any violation; `@runInThread __updateStatus()` interpolates `joint_state` toward target at capped speed. Verified by unit test 2026-09-29.
+- [~] Main node (`ros_control_node.py`) — publishes `/robot_info` at 20 Hz, subscribes `/joint_command` (`vanh_msgs/JointState`). Still to add: `simulation` launch param choosing Sim/UART interface (only once `Uart_Interface` exists).
 - [ ] `Uart_Interface`: write the skeleton first (same method signature as Sim_Interface), no need to run against real hardware yet
 - [ ] Define the UART protocol with STM32 (in parallel with the step below — framing/checksum must be agreed before coding both sides)
+- [ ] **Deferred until the gait planner exists — robot mode.** Decided 2026-09-29. `ROBOT_MODE`, `ChangeMode.srv` and `Sim_Interface.setMode` are defined but nothing is wired yet: no `/change_mode` service in the node, no `mode` field in `RobotInformation`, and joint commands are accepted in every mode (behaves as always-manual). Model to implement later:
+  - *Who changes it:* only the `/change_mode` service (by hand now; later a PS5 button via the joystick parser, or a supervisor).
+  - *Who owns it:* `ros_control` alone. Unlike Nishio, where the PLC owns the mode and `ros_control` only writes the request register and reads the status register back (hence Nishio's `sleep(0.5)` before returning `current`).
+  - *Who reads it:* (1) `ros_control` itself — accept joint commands only in MANUAL/AUTO; on entering a non-active mode set target = current joint state so the robot stops in place instead of finishing a stale motion. (2) The gait planner via `/robot_info.mode` — MANUAL listens to `/manual`, AUTO listens to the automatic source. This second reader is the only place MANUAL and AUTO differ, which is why mode only becomes meaningful once the gait planner exists.
+  - *Undefined:* `MODE_CHARGE_BATTERY` has no behavior yet (likely: lie down, cut `SERVO_POWER`, reject commands — all hardware-dependent). Keep it or drop it until charging hardware exists.
+  - *Must ship together:* command gating and the `/change_mode` service. Gating without the service leaves the robot stuck in `MODE_IDLE`, rejecting everything.
+- [ ] **Deferred until hardware exists — per-joint servo calibration.** Decided 2026-09-29: this becomes a *service* (`SetJointAngle.srv`: `uint8 joint_index` + `float32 position` → `bool success`), not extra fields on `ManualControl.msg`. Reasons: it is a one-shot call that needs a success reply (service semantics) while walking commands are a continuous 50 Hz stream (topic semantics); the two share no fields, so merging them means every walking command carries dead calibration fields; and keeping them on separate channels means the calibration path simply is not running during operation. Gate it behind a calibration entry in `ROBOT_MODE`. Orion keeps the equivalent outside ROS entirely, as standalone sketches in `Software/TestScripts/` (`All_Servo_Clocking.ino`, `Servo_Clocking.ino`), which is also acceptable. The calibration output is the per-servo center table — cf. Orion's `ServoConfig.h` (`FL_SERVO_CENTER_HIP 155`, `BL_SERVO_CENTER_HIP 162`, ...), which can only be produced by moving each servo individually.
 
 ## 3. vanh_stm32
 Role: firmware controlling the 12 joints. Only starts once real hardware exists.
@@ -84,8 +110,8 @@ PS5 → body velocity (lin_x, lin_y, ang_z, roll, pitch, z_offset)   <- body-lev
    → /robot_info (12 feedback angles)
    → /joint_states → RViz
 ```
-- [ ] Joint-level command message (12 target angles) — needed next, for `vanh_ros_control`
-- [ ] Body-level command message (Orion `OrionMotionCmd` style) — sits between PS5 and the gait planner, belongs to `vanh_ros_simulator`, deferred
+- [x] Joint-level command — decided 2026-09-28 to reuse `vanh_msgs/JointState` on topic `/joint_command` (same as Nishio's `fake_command`), no dedicated type
+- [x] Body-level command message — `ManualControl.msg` (discrete `int8[] actions`, chosen over Orion's float velocities); consumed by the gait planner, not yet written
 - [ ] Port/adapt the IK math (reference files above) into `vanh_ros_simulator`
 
 Reference notes on how the two projects handle manual/auto (read 2026-09-28):
