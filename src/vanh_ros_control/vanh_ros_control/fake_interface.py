@@ -139,4 +139,5 @@ class Sim_Interface:
 
                 self.joint_state[i] = self.__limit(current, limits)
 
+            print("JOINTS:", self.joint_state, "TARGET:", self.__target)
             sleep(0.05)

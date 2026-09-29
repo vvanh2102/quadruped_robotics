@@ -1,16 +1,16 @@
 #include "vanh_ros_simulator/simulator_node.h"
 
+using namespace std::chrono_literals;
+
 namespace vanh_ros_simulator
 {
     SimulatorNode::SimulatorNode(): Node("simulator_node"){}
     SimulatorNode::~SimulatorNode()
     {
-        if (joint_thread_.joinable())
-        {
+        if (joint_thread_.joinable()) {
             joint_thread_.join();
         }
     }
-
     template <class... Args> void SimulatorNode::log(const char *msg, Args... args)
     {
         RCLCPP_INFO(this->get_logger(), msg, args...);
@@ -39,12 +39,8 @@ namespace vanh_ros_simulator
     {
         this->declare_parameter("robot_joints", rclcpp::PARAMETER_STRING_ARRAY);
         joint_names_ = this->get_parameter("robot_joints").as_string_array();
+        joint_states_ = std::vector<float>(12, 0);
         
-        if (robot_joints_.size() < 12)
-        {
-            throw std::runtime_error("PARAM ERROR: robot_joints must contain at least 13 entries");
-        }
-        joint_states_ = std::vector<float>(13, 0);
         log("PARAM SET");
         for (const auto & name : joint_names_)
         {
@@ -69,7 +65,7 @@ namespace vanh_ros_simulator
             this->current_jointstate_.header.stamp = this->get_clock()->now();
             this->current_jointstate_.name = joint_names_;
 
-            this->current_jointstate_.position.resize(NUM_JOINTS);
+            this->current_jointstate_.position.resize(12);
             this->current_jointstate_.position[ROBOT_JOINT_ORDERS::FRONT_LEFT_JOINT_1] =
                 joint_states_[vanh_msgs::msg::ManualControl::FRONT_LEFT_JOINT_1];
             this->current_jointstate_.position[ROBOT_JOINT_ORDERS::FRONT_LEFT_JOINT_2] =

@@ -11,19 +11,18 @@ from launch_ros.substitutions import FindPackageShare
 # ========== **GENERATE LAUNCH DESCRIPTION** ========== #
 def generate_launch_description():
     # Robot description (URDF via xacro)
-    robot_description = {
-        'robot_description': ParameterValue(
-            Command([
-                PathJoinSubstitution([FindExecutable(name='xacro')]), ' ',
-                PathJoinSubstitution([FindPackageShare('vanh_description'), 'config', 'vanh.urdf.xacro']),
-            ]),
-            value_type=str,
-        )
-    }
+    robot_description_content = Command(
+        [
+            PathJoinSubstitution([FindExecutable(name='xacro')]),
+            ' ',
+            PathJoinSubstitution(
+                [FindPackageShare('vanh_description'), 'config', 'vanh.urdf.xacro']
+            ),
+        ]
+    )
+    robot_description = {'robot_description': robot_description_content}
 
-    config = os.path.join(get_package_share_directory('vanh_ros_simulator'), 'param', 'config.yaml')
-    rviz_config = os.path.join(get_package_share_directory('vanh_description'), 'rviz', 'rviz.rviz')
-
+    # TF PUBLISHER
     robot_state_publisher = Node(
         package='robot_state_publisher',
         executable='robot_state_publisher',
@@ -31,6 +30,8 @@ def generate_launch_description():
         parameters=[robot_description],
     )
 
+    # SIMULATOR NODE
+    config = os.path.join(get_package_share_directory('vanh_ros_simulator'), 'param', 'config.yaml')
     simulator_node = Node(
         package='vanh_ros_simulator',
         executable='simulator_node',
@@ -40,6 +41,8 @@ def generate_launch_description():
         arguments=['--ros-args', '--log-level', 'INFO'],
     )
 
+    # RVIZ
+    rviz_config = os.path.join(get_package_share_directory('vanh_description'), 'rviz', 'rviz.rviz')
     rviz = Node(
         package='rviz2',
         executable='rviz2',

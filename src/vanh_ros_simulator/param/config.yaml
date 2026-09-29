@@ -1,16 +1,16 @@
 simulator_node:
   ros__parameters:
     robot_joints: [
-      "front_left_joint_1", 
-      "front_left_joint_2", 
-      "front_left_joint_3",
-      "front_right_joint_1", 
-      "front_right_joint_2", 
-      "front_right_joint_3",
-      "back_left_joint_1", 
-      "back_left_joint_2", 
-      "back_left_joint_3",
-      "back_right_joint_1", 
-      "back_right_joint_2", 
-      "back_right_joint_3",
+      "FL_hip_joint", 
+      "FL_thigh_joint", 
+      "FL_calf_joint",
+      "FR_hip_joint", 
+      "FR_thigh_joint", 
+      "FR_calf_joint",
+      "RL_hip_joint", 
+      "RL_thigh_joint", 
+      "RL_calf_joint",
+      "RR_hip_joint", 
+      "RR_thigh_joint", 
+      "RR_calf_joint",
     ]

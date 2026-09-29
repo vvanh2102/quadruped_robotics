@@ -3,10 +3,16 @@
 
 #include <string>
 #include <vector>
+#include <chrono>
+#include <stdexcept>
+#include <mutex>
+#include <thread>
+#include <fstream>
 
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/joint_state.hpp>
 #include <vanh_msgs/msg/robot_information.hpp>
+#include <vanh_msgs/msg/manual_control.hpp>
 
 #include "vanh_ros_simulator/solver_data.h"
 
@@ -17,7 +23,7 @@ class SimulatorNode : public rclcpp::Node
 {
 public:
     SimulatorNode();
-    ~SimulatorNode(){};
+    ~SimulatorNode();
     // HELPER
     template <class... Args> void log(const char *msg, Args... args);
     
@@ -44,7 +50,7 @@ private:
 
     // Shared between the subscription callback and the publisher thread
     std::mutex state_mutex_;
-    std::vector<double> joint_states_;
+    std::vector<float> joint_states_;
     double last_info_time_ = 0.0;
 };
 
