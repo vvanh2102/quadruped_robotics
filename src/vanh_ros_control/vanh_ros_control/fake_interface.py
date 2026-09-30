@@ -63,7 +63,6 @@ class Sim_Interface:
         self.error = []                   
         self.device = [False] * 2
 
-        self.joint_action = [0.0] * ROBOT_JOINT_STATES.NUM_JOINTS
         self.joint_state = [0.0] * ROBOT_JOINT_STATES.NUM_JOINTS
 
         self.__target = [0.0] * ROBOT_JOINT_STATES.NUM_JOINTS
@@ -109,6 +108,7 @@ class Sim_Interface:
         self.__target = list(positions)
         return True
 
+    # AUTO GET STATUS
     @staticmethod
     def __limit(value: float, limits: tuple) -> float:
         """
@@ -131,13 +131,11 @@ class Sim_Interface:
                 speed = ROBOT_SPEED.JOINTS_ORDER[i]
                 limits = ROBOT_LIMIT.JOINTS_ORDER[i]
                 step = min(dt * speed, abs(target - current))
-
                 if target > current:
                     current += step
                 elif target < current:
                     current -= step
-
                 self.joint_state[i] = self.__limit(current, limits)
 
-            print("JOINTS:", self.joint_state, "TARGET:", self.__target)
+            print("JOINTS:", self.joint_state, self.__target)
             sleep(0.05)

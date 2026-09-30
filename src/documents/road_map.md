@@ -7,20 +7,33 @@ Convention:
 
 ---
 
-## Current status (updated 2026-09-29)
+## Current status (updated 2026-09-30)
 
-**Done:** `vanh_msgs` (`JointState`, `RobotInformation`, `Stm32Status`, `ManualControl`, `ChangeMode.srv`); `vanh_ros_control` (`Sim_Interface` + `ros_control_node`, publishes `/robot_info`, accepts `/joint_command`).
+**Done:** `vanh_msgs` (`JointState`, `RobotInformation`, `Stm32Status`, `ManualControl`, `ChangeMode.srv`); `vanh_ros_control` (`Sim_Interface` + `ros_control_node`, publishes `/robot_info`, accepts `/joint_command`); `vanh_ros_simulator` bridge `/robot_info` → `/joint_states` (Nishio-style cached state + `publishJointState` thread, named index mapping `ROBOT_JOINT_ORDERS` ↔ `ManualControl` joint constants, joint names in `param/config.yaml`), two launch files (`ros_control.launch.py`, `simulator.launch.py`, run in separate terminals like Nishio). URDF switched to `robot_reinforcement.urdf` (root `trunk`, joints `FL_hip_joint`...).
 
-**Current step — `/robot_info` → `/joint_states` bridge in `vanh_ros_simulator`:**
-- [x] `simulator_node.h` / `simulator_node.cpp` skeleton (Nishio style: `setup()`, `initParam()`, `log()`), `param/config.yaml` with the 12 joint names
-- [ ] Fix `simulator_node` (see review 2026-09-29: `setup()` never called, undefined `robot_joints_`, wrong size check, bad `%s` logging, unused publish thread)
-- [ ] `CMakeLists.txt`: build/install `simulator_node`, install `launch/` and `param/`
-- [ ] `package.xml`: dependencies
-- [ ] `launch/simulator.launch.py`: `robot_state_publisher` + `ros_control_node` + `simulator_node` (with `config.yaml`) + RViz — no `joint_state_publisher`
-- [ ] `vanh_description/rviz/rviz.rviz`: `Fixed Frame` → `base_link` (currently `trunk`, which does not exist in `robot_description.urdf`)
-- [ ] Verify in RViz: a `/joint_command` moves the expected legs, right-side joints turn opposite to left as per URDF axes
+**Decisions 2026-09-30 for gait + IK:**
+- **Canonical URDF = `robot_reinforcement.urdf`.** It has foot links (`*_foot`, so FK can be checked against TF), a clean zero pose (thigh horizontal pointing back, calf vertical) identical on all four legs, and `ROBOT_LIMIT` was taken from it. `robot_description.urdf` has no foot link and left/right thigh zero offsets of 27.7° / 33.4°, so IK derived for one file does not fit the other.
+- **Leg geometry equals Orion's firmware:** L1 hip offset 0.0393 m (`L1_HIP` 39.3 mm), L2 thigh 0.1095 m (`L2_FEMUR` 109.5), L3 calf-to-foot 0.1198 m (`L3_TIBIA` 119.9). Orion's analytic IK applies after converting units (mm → m, Orion z points down) and URDF sign conventions (hip axis −x on front legs / +x on rear; thigh/calf axes mirrored left/right). Orion's Python `kinematics.py` uses *different* sizes (45 / 111.5 / 155 mm) — do not take numbers from it.
+- **Language/location: Python, new `ament_python` package `vanh_gait`** (Nishio keeps IK in Python in `nishio_python_ultis`). Math is easier to write and unit-test with numpy + pytest, and joint limits can be read from the same URDF instead of being copied into a second language.
+- **Geometry and limits are read from the URDF at runtime**, not typed in by hand — one source of truth, no transcription errors, tiny `rpy` terms included in FK.
+- **IK is a library function, not a service.** 4 legs × 20–50 Hz; Nishio's `solve_ik` service works because it is called once per waypoint, not per control tick.
+- **Gait runs on a timer with a phase variable, not blocking loops** — same as Orion's real firmware (`calculateTrotGaitPositions`), unlike the Arduino prototype's blocking `stepGait()`.
+- **IK output must be checked against the joint limits before publishing** — `controlManualJoint` rejects the whole 12-joint command if any angle is out of range. On IK failure keep the last valid command and warn; never publish a mix of new and old angles.
+- **Do not snap to home when stopping.** Orion's `calculateTrotGaitPositions` resets `gait_phase = 0` and jumps all feet to neutral when speed < 0.05, which yanks a leg that is mid-swing. Finish the current half-cycle (both pairs on the ground) before holding the stand pose, and low-pass stride/height changes (Orion filters posture with `alpha = 0.15` at 50 Hz in `freertos.c`).
+- **Joint `rpy` is not ignored (decided 2026-09-30).** FK applies each joint's URDF `rpy` before its rotation (`R = R_prev @ rpy_matrix @ rot(axis, q)`), matching the full URDF FK exactly on all four legs. IK keeps the simple analytic solve (which ignores `rpy`) and corrects it with 3 rounds of "aim += target − FK(q)": on RL (the only leg with `rpy`, 1.2e-4 rad) the error goes 1.8e-5 → 1.7e-9 → 6.1e-13 m; the other legs are exact after the first round. Verified numerically on 20 000 random in-limit joint sets per leg, 0 failures. Stand pose 0.16 m below hip: FL `[0, -0.728914, 0.041138]`, FR/RR `[0, 0.730045, -0.041220]`, BL/RL `[0.000030, -0.728940, 0.041107]`.
 
-**Next step — gait planner:** consume `/manual` (`ManualControl`), turn body actions into 12 joint angles over time, publish `/joint_command`. Leg IK from Orion (`LegIK.cpp`, `kinematics.py`). Wire robot mode (`/change_mode`) at the same time — see the deferred mode item under `vanh_ros_control`.
+**Current step — gait + IK in `vanh_gait` (fixed order):**
+1. [ ] Create the `vanh_gait` Python package
+2. [ ] Load the four legs' geometry and limits from the URDF
+3. [ ] `forward(leg, angles)`; unit test at zero pose, then compare with `ros2 run tf2_ros tf2_echo trunk <P>_foot`
+4. [ ] `solve(leg, target)`; round-trip unit test, reachability and limit checks
+5. [ ] Stand pose for all four legs → `/joint_command`
+6. [ ] Time-based trot gait, then map `ManualControl.actions` (`STAND` → `FORWARD` → `STOP` first, then the rest); robot mode (`/change_mode`) wired afterwards — see the deferred mode item under `vanh_ros_control`
+
+**Pending fixes in `vanh_ros_simulator` / `vanh_ros_control` (found 2026-09-30):**
+- [ ] `simulator_node`: `state_mutex_` is declared but never locked — `onRobotInfo` writes `joint_states_` while the publish thread reads it (data race)
+- [ ] `simulator_node`: `onRobotInfo` does not check for 12 positions before the publish thread reads index 0..11; `initParam` no longer checks that `robot_joints` has 12 names
+- [ ] Rates: `ros_control_node` publishes `/robot_info` every 0.2 s and the bridge every 200 ms while `Sim_Interface` updates every 0.05 s — raise both to 20 Hz so continuous motion is visible
 
 Run note: a Nishio stack may be running on this machine and also publishes `/robot_info` (different type) — use `export ROS_DOMAIN_ID=42` in every terminal.
 
@@ -91,9 +104,14 @@ General caution when reading Nishio: prefer the `*2.cpp` variants; the non-`2` f
 
 ## Gait / IK (referencing Orion-Quadruped-master)
 
-Orion has two IK/gait implementations worth comparing before picking one:
-- `Software/STM32Firmware/Orion-Controls/src/LegIK.cpp` + `main.cpp` — per-leg analytic IK (hip/femur/tibia, law-of-cosines solve), gait functions (`stepGait`, `sineStepGait`, `unisonGait`) run directly on the STM32, no ROS involved.
-- `Software/kinematics_sim/matplotlib_simple_sim/kinematics.py` — matrix-based IK per leg with body rotation + center-of-rotation offset support (adapted from an external IK reference), meant for simulation/prototyping in Python, not firmware.
+**Correction 2026-09-30:** Orion has **two** firmware trees. Earlier notes (and chat) referenced only `Software/STM32Firmware/Orion-Controls/` — that is the Arduino prototype (blocking `stepGait()` loops, no UART telemetry). The real FreeRTOS firmware is `Software/STM32Firmware/Orion/Core/Src/`, and it *does* pack telemetry (`freertos.c:660`, 99-byte packet, header `0xAA 0x55`). Its 12 joint angles are the *commanded* IK angles — `LegIK.c` says the `jointAngle*` fields "do not set anything, just to send to jetson".
+
+References to use for vanh (real firmware):
+- `Orion/Core/Src/LegMotion.c` — `calculateTrotGaitPositions()`: phase-based trot, diagonal pairs, swing sine arc (`STEP_HEIGHT` 45 mm), stance dip (`STANCE_DEPTH` 15 mm), turning by giving left and right legs different x stride, `BASE_Z` 150 mm.
+- `Orion/Core/Src/BodyIK.c` — `updateBodyPostureWithFeet()`: applies roll/pitch/yaw/height to foot targets before leg IK.
+- `Orion/Core/Src/LegIK.c` — `LegIK_Calculate()`: analytic leg IK; hip sign handled for all four front/rear × left/right cases; clamps out-of-reach targets instead of failing.
+- `Orion/Core/Src/freertos.c` — call order gait → body posture → leg IK, with a low-pass filter on posture commands.
+- `Software/kinematics_sim/matplotlib_simple_sim/kinematics.py` — useful for its body-rotation idea only; its link lengths do not match this robot.
 
 **DECIDED 2026-09-28 — gait + IK live in ROS (`vanh_ros_simulator`), not on the STM32.**
 

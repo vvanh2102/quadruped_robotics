@@ -91,10 +91,20 @@ namespace vanh_ros_simulator
             this->current_jointstate_.position[ROBOT_JOINT_ORDERS::BACK_RIGHT_JOINT_3] =
                 joint_states_[vanh_msgs::msg::ManualControl::BACK_RIGHT_JOINT_3];
 
-            pub_joint_state_->publish(this->current_jointstate_);
+            try
+            {
+                pub_joint_state_->publish(this->current_jointstate_);
+            }
+            catch (const std::exception &e)
+            {
+                log("PUBLISH JOINTSTATE: Error - %s", e.what());
+            }
+            
             std::this_thread::sleep_for(200ms);
         }
     }
+
+    
 }  // namespace vanh_ros_simulator
 
 int main(int argc, char ** argv)
