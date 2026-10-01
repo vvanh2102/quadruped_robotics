@@ -1,14 +1,11 @@
 #!/usr/bin/python3
 import math
-
 import numpy as np
-
 
 class Gait:
     PERIOD = 1.0
     STEP_HEIGHT = 0.01
     STAND_HEIGHT = 0.16
-
     SMOOTH_TIME = 0.3
     HEIGHT_SPEED = 0.02
 
@@ -17,7 +14,6 @@ class Gait:
 
     def __init__(self, kinematics):
         self.__kinematics = kinematics
-
         self.__phase = 0.0
         self.__velocity = np.zeros(3)
         self.__lift = 0.0

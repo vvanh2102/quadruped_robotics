@@ -1,6 +1,5 @@
 #!/usr/bin/python3
 from time import monotonic
-
 import numpy as np
 import rclpy
 from rclpy.node import Node
@@ -10,8 +9,7 @@ from vanh_msgs.msg import JointState, ManualControl
 from vanh_gait.kinematics import Kinematics
 from vanh_gait.gait import Gait
 
-
-class Gait_Node(Node):
+class Gait_Utils:
     RATE_HZ = 20.0
     MANUAL_TIMEOUT = 0.5
 
@@ -21,6 +19,8 @@ class Gait_Node(Node):
     SPEED_X = 0.02
     SPEED_Y = 0.01
     TURN_RATE = 0.1
+    
+class Gait_Node(Node):
 
     def __init__(self):
         super().__init__("gait_node")
@@ -36,25 +36,13 @@ class Gait_Node(Node):
         self.__last_update = monotonic()
 
         # Publisher
-        self.__cmd_pub = self.create_publisher(
-            JointState,
-            "joint_command",
-            3,
-        )
+        self.__cmd_pub = self.create_publisher(JointState,"joint_command",3)
 
         # Subscriber
-        self.__manual_sub = self.create_subscription(
-            ManualControl,
-            "manual",
-            self.__onManual,
-            3,
-        )
+        self.__manual_sub = self.create_subscription(ManualControl,"manual",self.__onManual,3)
 
         # Timer
-        self.__timer = self.create_timer(
-            1.0 / self.RATE_HZ,
-            self.__update,
-        )
+        self.__timer = self.create_timer(1.0 / self.RATE_HZ,self.__update,)
 
     # CALLBACK
     def __onManual(self, msg):
