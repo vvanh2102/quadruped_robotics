@@ -12,14 +12,13 @@ from vanh_gait.gait import Gait
 class Gait_Utils:
     RATE_HZ = 20.0
     MANUAL_TIMEOUT = 0.5
-
     STAND_HEIGHT = Gait.STAND_HEIGHT
     CROUCH_HEIGHT = 0.12
 
     SPEED_X = 0.02
     SPEED_Y = 0.01
     TURN_RATE = 0.1
-    
+
 class Gait_Node(Node):
 
     def __init__(self):

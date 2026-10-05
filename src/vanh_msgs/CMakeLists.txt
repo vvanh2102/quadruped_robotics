@@ -18,6 +18,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/ManualControl.msg"
   "msg/AutoControl.msg"
   "msg/Stm32Status.msg"
+  "msg/Geometry.msg"
 
   # BACKEND - CONTROL
   "srv/ChangeMode.srv"

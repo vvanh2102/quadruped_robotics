@@ -2,129 +2,92 @@
 import math
 import numpy as np
 
-class Gait:
-    PERIOD = 1.0
-    STEP_HEIGHT = 0.01
-    STAND_HEIGHT = 0.16
-    SMOOTH_TIME = 0.3
-    HEIGHT_SPEED = 0.02
+from vanh_msgs.msg import ManualControl
+from vanh_msgs.msg import ManualControl, Geometry
+from vanh_gait.kinematics import Kinematics
 
-    # FL, FR, BL, BR.
-    PHASE_OFFSET = (0.0, 0.5, 0.5, 0.0)
+class PARAM_GAIT:
+    STEP_HEIGHT  = 0.02   # meters
+    STEP_LENGTH  = 0.03    # Length of the step ,meters
+    STAND_HEIGHT = 0.2    # Height below the hip ,meters
+    
 
-    def __init__(self, kinematics):
-        self.__kinematics = kinematics
-        self.__phase = 0.0
+class GAIT_STATE:
+    def __init__(self):
+        self.__kinematics = Kinematics()
+
         self.__velocity = np.zeros(3)
-        self.__lift = 0.0
-        self.__height = self.STAND_HEIGHT
+        self.__step_height = PARAM_GAIT.STEP_HEIGHT
+        self.__step_length = PARAM_GAIT.STEP_LENGTH
+        self.__stand_height = PARAM_GAIT.STAND_HEIGHT
 
     # METHOD
-    def getHeight(self):
-        """Return the current requested height below the hip."""
-        return self.__height
-
-    def update(self, dt, velocity, height):
+    def __limitStepLength(self,start_position, end_position):
         """
-        Calculate four foot targets in the trunk frame.
-
-        dt: elapsed time, in seconds
-        velocity: [vx, vy, yaw_rate], in m/s and rad/s
-        height: distance below the hip, in meters
+        Limit the step length based on the requested velocity.
         """
-        dt = min(max(dt, 0.0), 0.1)
-        velocity = np.asarray(velocity, dtype=float)
+        
+        return True
+        
+    def __FuncGeometry_path(self, x_time , start_position , end_position):
+        """
+        Func the geometry path of the foot in the trunk frame.
+        """
+        x_start = start_position.x
+        x_end = end_position.x
+        z_time = start_position.z + 4 * self.__step_height * (x_time - x_start) * (x_time - x_end) / (x_end - x_start) ** 2
+        
+        position = Geometry()
+        position.x = float(x_time)
+        position.y = float(start_position.y)
+        position.z = float(z_time)
+        return position
 
-        # Smooth movement commands.
-        alpha = 1.0 - math.exp(-dt / self.SMOOTH_TIME)
-        moving = np.linalg.norm(velocity) > 1e-8
+    def __timingLaw(self, t , duration , x_start , x_end):
+        """
+        Calculate the timing law of the foot in the trunk frame.
+        ```
+        t : elapsed swing time
+        duration : total time
+        x_start, x_end : start and end positions of the foot in the trunk frame 
+        """
+        x_time = x_start + (x_end - x_start) * (3.0*(t/duration)**2 - 2.0*(t/duration)**3)
+        return x_time
 
-        self.__velocity += alpha * (
-            velocity - self.__velocity
+    def __calTrajectory(self,t , duration , start_position , end_position):
+        """
+        Combine the timing law and geometry path 
+        ```
+        Return:
+            Geometry containing the foot position in the trunk frame.
+        """
+        x_time = self.__timingLaw(t , duration , start_position.x , end_position.x)
+        return self.__FuncGeometry_path(x_time , start_position , end_position)
+
+    def __calFootTrajectory(self, leg_name, t , duration , direction = 1):
+        """
+        Calculate one swing starting from the standing position.
+        ```
+        Parameters:
+            leg_name: name of the leg
+            t: elapsed swing time
+            duration: total time of the swing
+            direction: 1 for forward, -1 for backward
+        Return: 
+            Geometry in the trunk frame
+        """
+        standing_position = self.__kinematics.standing_target_onefoot(leg_name , self.__stand_height)
+        
+        start_position = Geometry(
+            x=float(standing_position[0]),
+            y=float(standing_position[1]),
+            z=float(standing_position[2]),
         )
 
-        target_lift = 1.0 if moving else 0.0
-        self.__lift += alpha * (target_lift - self.__lift)
-
-        # Limit the speed of posture changes.
-        self.__height += np.clip(
-            height - self.__height,
-            -self.HEIGHT_SPEED * dt,
-            self.HEIGHT_SPEED * dt,
+        end_position = Geometry(
+            x=start_position.x + direction * self.__step_length,
+            y=start_position.y,
+            z=start_position.z,
         )
 
-        stopped = (
-            not moving
-            and np.linalg.norm(self.__velocity) < 1e-5
-            and self.__lift < 1e-4
-        )
-
-        if stopped:
-            self.__velocity[:] = 0.0
-            self.__lift = 0.0
-            self.__phase = 0.0
-        else:
-            self.__phase = (
-                self.__phase + dt / self.PERIOD
-            ) % 1.0
-
-        vx, vy, turn = self.__velocity
-        targets = []
-
-        for leg_name, phase_offset in zip(
-            self.__kinematics.LEGS,
-            self.PHASE_OFFSET,
-        ):
-            home = self.__kinematics.home(
-                leg_name,
-                self.__height,
-            )
-
-            # Include rotation around the trunk origin.
-            leg_vx = vx - turn * home[1]
-            leg_vy = vy + turn * home[0]
-
-            # Stance lasts half of the gait period.
-            step_x = leg_vx * self.PERIOD / 2.0
-            step_y = leg_vy * self.PERIOD / 2.0
-
-            phase = (self.__phase + phase_offset) % 1.0
-
-            offset = self.__footOffset(
-                phase,
-                step_x,
-                step_y,
-                self.__lift * self.STEP_HEIGHT,
-            )
-
-            targets.append(home + offset)
-
-        return targets
-
-    # HELPER
-    @staticmethod
-    def __footOffset(phase, step_x, step_y, lift):
-        """
-        Return the foot offset from its standing position.
-
-        Position is continuous at phase boundaries.
-        Velocity is not continuous in this simple trajectory.
-        """
-        if phase < 0.5:
-            # Swing: move forward and lift the foot.
-            progress = phase / 0.5
-
-            return np.array([
-                step_x * (progress - 0.5),
-                step_y * (progress - 0.5),
-                lift * math.sin(math.pi * progress),
-            ])
-
-        # Stance: move backward relative to the body.
-        progress = (phase - 0.5) / 0.5
-
-        return np.array([
-            step_x * (0.5 - progress),
-            step_y * (0.5 - progress),
-            0.0,
-        ])
+        return self.__calTrajectory(t , duration , start_position , end_position)

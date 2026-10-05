@@ -336,7 +336,7 @@ class Kinematics:
         return None
 
     # STANDING TARGET
-    def standing_target(self, leg_name, height_below_hip):
+    def standing_target_onefoot(self, leg_name, height_below_hip):
         """
         Calculate a standing foot target in the trunk frame.
 
