@@ -8,6 +8,7 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)  
 find_package(rosidl_default_generators REQUIRED)
+find_package(geometry_msgs REQUIRED)
 find_package(builtin_interfaces REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
@@ -18,13 +19,12 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/ManualControl.msg"
   "msg/AutoControl.msg"
   "msg/Stm32Status.msg"
-  "msg/Geometry.msg"
 
   # BACKEND - CONTROL
   "srv/ChangeMode.srv"
   "srv/SetJointAngle.srv"
 
-  DEPENDENCIES builtin_interfaces
+  DEPENDENCIES builtin_interfaces geometry_msgs
 )
 
 if(BUILD_TESTING)

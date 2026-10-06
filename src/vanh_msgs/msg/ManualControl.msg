@@ -1,4 +1,4 @@
-int8[] actions
+int8 action
 
 int8 FRONT_LEFT_JOINT_1  = 0
 int8 FRONT_LEFT_JOINT_2  = 1
