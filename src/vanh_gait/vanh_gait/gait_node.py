@@ -89,7 +89,7 @@ class Gait_Node(Node):
 
         msg = JointState()
         msg.positions = joint_angles
-
+        self.get_logger().debug(f"PUBLISHED {len(joint_angles)} joint angles: {joint_angles}")
         self.__cmd_pub.publish(msg)
 
 def main(args=None):

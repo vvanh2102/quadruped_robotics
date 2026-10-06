@@ -153,26 +153,27 @@ class GAIT_STATE:
             self.__cycle_time = 0.0
         else:
             self.__cycle_time += dt
-            cycle_duration = len(PARAM_GAIT.BACKWARD_ORDER) * self.__swing_duration
             
-            if self.__cycle_time >= cycle_duration:
-                self.__cycle_time %= cycle_duration
-                self.__current_mission = self.__request_mission
-            else:
-                if self.__current_mission == ManualControl.STOP:
-                    self.__cycle_time = 0.0
-                    return self.__STOP()
-                elif self.__current_mission == ManualControl.FORWARD:
-                    return self.__FORWARD_OR_BACKWARD(direction=1 , cycle_time=self.__cycle_time)
-                elif self.__current_mission == ManualControl.BACKWARD:
-                    return self.__FORWARD_OR_BACKWARD(direction=-1, cycle_time=self.__cycle_time)
-                elif self.__current_mission == ManualControl.MOVE_LEFT:
-                    return self.__MOVE_LEFT_OR_MOVE_RIGHT()
-                elif self.__current_mission == ManualControl.MOVE_RIGHT:
-                    return self.__MOVE_LEFT_OR_MOVE_RIGHT()
-                                            
-                else:
-                    return self.__STOP()
+        cycle_duration = len(PARAM_GAIT.BACKWARD_ORDER) * self.__swing_duration    
+        if self.__cycle_time >= cycle_duration:
+            self.__cycle_time %= cycle_duration
+            self.__current_mission = self.__request_mission
+    
+        if self.__current_mission == ManualControl.STOP:
+            self.__cycle_time = 0.0
+            return self.__STOP()
+        elif self.__current_mission == ManualControl.FORWARD:
+            return self.__FORWARD_OR_BACKWARD(direction=1 , t=self.__cycle_time)
+        elif self.__current_mission == ManualControl.BACKWARD:
+            return self.__FORWARD_OR_BACKWARD(direction=-1, t=self.__cycle_time)
+        elif self.__current_mission == ManualControl.MOVE_LEFT:
+            return self.__MOVE_LEFT_OR_MOVE_RIGHT()
+        elif self.__current_mission == ManualControl.MOVE_RIGHT:
+            return self.__MOVE_LEFT_OR_MOVE_RIGHT()
+                                    
+        else:
+            return self.__STOP()
+        
                                       
     def __STOP(self):
         """
