@@ -7,12 +7,23 @@ from geometry_msgs.msg import Point32
 from vanh_gait.kinematics import Kinematics
 
 class PARAM_GAIT:
-    STEP_HEIGHT  = 0.02     # meters
-    STEP_LENGTH  = 0.03     # Length of the step ,meters
-    STAND_HEIGHT = 0.2      # Height below the hip ,meters
-    SWING_DURATION = 0.5    # Time to swing one leg on cycle 
+    # The constant displacement 
+    STEP_HEIGHT  = 0.05     
+    STEP_LENGTH  = 0.08
+    SIDE_STEP_LENGTH = 0.03     
+    STAND_HEIGHT = 0.17   
+    TURN_ANGLE = math.radians(20.0)  
+
+    # Time to swing one leg on cycle
+    SWING_DURATION = 0.5     
+
+    # Joint order
     FORWARD_ORDER  = ['BL', 'FL', 'BR', 'FR']
     BACKWARD_ORDER = ['FR', 'BR', 'FL', 'BL']
+    LEFT_ORDER  = ['BL', 'FL', 'BR', 'FR']
+    RIGHT_ORDER = ['BR', 'FR', 'BL', 'FL']
+    TURN_LEFT_ORDER = ['FR', 'FL', 'BL', 'BR']
+    TURN_RIGHT_ORDER = ['FL', 'FR', 'BR', 'BL']
 
 class GAIT_STATE:
     def __init__(self):
@@ -22,6 +33,9 @@ class GAIT_STATE:
         self.__step_height = PARAM_GAIT.STEP_HEIGHT
         self.__step_length = PARAM_GAIT.STEP_LENGTH
         self.__stand_height = PARAM_GAIT.STAND_HEIGHT
+        self.__side_step_length = PARAM_GAIT.SIDE_STEP_LENGTH
+        self.__turn_angle = PARAM_GAIT.TURN_ANGLE
+
         self.__swing_duration = PARAM_GAIT.SWING_DURATION
 
         self.__request_mission = ManualControl.STOP
@@ -70,36 +84,26 @@ class GAIT_STATE:
         x_time = self.__timingLaw(t , duration , start_position.x , end_position.x)
         return self.__FuncGeometry_path(x_time , start_position , end_position)
 
-    def __getOneFootTrajectory(self, leg_name, t , duration , direction = 1):
+    def __getOneFootTrajectory(self, t, duration, start_position, end_position):
         """
-        Calculate one swing starting from the standing position.
-        ```
-        Parameters:
-            leg_name: name of the leg
-            t: elapsed swing time
-            duration: total time of the swing
-            direction: 1 for forward, -1 for backward
-        Return: 
-            Point32 in the trunk frame
+        Apply the existing X-Z trajectory along a horizontal step.
+
+        start_position, end_position: NumPy arrays at the same height
+        Return: NumPy foot position in the input reference frame
         """
-        standing_position = self.__kinematics.standing_target_onefoot(leg_name , self.__stand_height)
-        
-        start_position = Point32(
-            x=float(standing_position[0]),
-            y=float(standing_position[1]),
-            z=float(standing_position[2]),
-        )
+        displacement = end_position - start_position
+        step_distance = float(np.linalg.norm(displacement[:2]))
+        if step_distance == 0.0:
+            return start_position.copy()
 
-        end_position = Point32(
-            x=start_position.x + direction * self.__step_length,
-            y=start_position.y,
-            z=start_position.z,
-        )
+        path_start = Point32(x=0.0, y=0.0, z=0.0)
+        path_end = Point32(x=step_distance, y=0.0, z=0.0)
+        path_position = self.__calTrajectory(t, duration, path_start, path_end)
+        progress = path_position.x / path_end.x
+        foot_position = start_position + progress * displacement
+        foot_position[2] += path_position.z
 
-        if not self.__islimitStepLength(start_position, end_position):
-            raise ValueError("Step length exceeds the limit.")
-        else:
-            return self.__calTrajectory(t , duration , start_position , end_position)
+        return foot_position
 
     # MANUAL MISSION 
     def controlManual(self, action):
@@ -148,13 +152,14 @@ class GAIT_STATE:
         """
         Manager all of mission 
         """
+        cycle_duration = len(PARAM_GAIT.BACKWARD_ORDER) * self.__swing_duration
+
         if self.__current_mission == ManualControl.STOP:
             self.__current_mission = self.__request_mission
             self.__cycle_time = 0.0
         else:
-            self.__cycle_time += dt
-            
-        cycle_duration = len(PARAM_GAIT.BACKWARD_ORDER) * self.__swing_duration    
+            self.__cycle_time += dt    
+ 
         if self.__cycle_time >= cycle_duration:
             self.__cycle_time %= cycle_duration
             self.__current_mission = self.__request_mission
@@ -163,79 +168,109 @@ class GAIT_STATE:
             self.__cycle_time = 0.0
             return self.__STOP()
         elif self.__current_mission == ManualControl.FORWARD:
-            return self.__FORWARD_OR_BACKWARD(direction=1 , t=self.__cycle_time)
+            return self.__FORWARD_OR_BACKWARD(direction = 1 , t = self.__cycle_time)
         elif self.__current_mission == ManualControl.BACKWARD:
-            return self.__FORWARD_OR_BACKWARD(direction=-1, t=self.__cycle_time)
+            return self.__FORWARD_OR_BACKWARD(direction = -1, t = self.__cycle_time)
         elif self.__current_mission == ManualControl.MOVE_LEFT:
-            return self.__MOVE_LEFT_OR_MOVE_RIGHT()
+            return self.__MOVE_LEFT_OR_MOVE_RIGHT(direction = 2, t = self.__cycle_time)
         elif self.__current_mission == ManualControl.MOVE_RIGHT:
-            return self.__MOVE_LEFT_OR_MOVE_RIGHT()
-                                    
-        else:
-            return self.__STOP()
-        
-                                      
+            return self.__MOVE_LEFT_OR_MOVE_RIGHT(direction = -2, t = self.__cycle_time)
+        elif self.__current_mission == ManualControl.TURN_LEFT:
+            return self.__TURN_LEFT_OR_TURN_RIGHT(direction = 3 , t = self.__cycle_time)
+        elif self.__current_mission == ManualControl.TURN_RIGHT:
+            return self.__TURN_LEFT_OR_TURN_RIGHT(direction = -3 , t = self.__cycle_time)
+        elif self.__current_mission == ManualControl.CROUCH:
+            return self.__CROUCH()
+        elif self.__current_mission == ManualControl.STAND:
+            return self.__STAND()
+                                            
+    # WALK COORDINATION
+    def __walk(self, t , walk_order , step_displacement , turn_angle = 0.0):
+        """
+        Coordinate four feet for one walking cycle.
+
+        step_displacement: planned trunk translation per cycle [m]
+        turn_angle: planned trunk yaw change per cycle [rad]
+
+        Plan positions in a fixed frame matching the trunk frame
+        at the cycle start, then convert to the moving trunk frame.
+        """
+        targets = {}
+        swing_index = min(int(t / self.__swing_duration),len(walk_order) - 1)
+        swing_time = t - swing_index * self.__swing_duration
+        swing_progress = self.__timingLaw(swing_time, self.__swing_duration, 0.0, 1.0)
+
+        cycle_progress = (swing_index + swing_progress) / len(walk_order)
+        trunk_displacement = step_displacement * cycle_progress
+        trunk_yaw = turn_angle * cycle_progress
+
+        landing_rotation = self.__kinematics.rot_z(turn_angle)
+        ground_to_trunk_rotation = self.__kinematics.rot_z(-trunk_yaw)
+
+        for leg_index, leg_name in enumerate(walk_order):
+            start_position = self.__kinematics.standing_target_onefoot(leg_name,self.__stand_height)
+            end_position = landing_rotation @ start_position + step_displacement
+
+            if leg_index < swing_index:
+                foot_position = end_position
+            elif leg_index == swing_index:
+                foot_position = self.__getOneFootTrajectory(swing_time, self.__swing_duration, start_position, end_position)
+            else:
+                foot_position = start_position
+            # p_trunk = Rz(-trunk_yaw) @ (p_fixed - trunk_translation)
+            targets[leg_name] = ground_to_trunk_rotation @ (foot_position - trunk_displacement)
+        return targets
+
+    # MISSIONS
     def __STOP(self):
         """
-        Handle the stop action.
+        Return the neutral standing targets.
         """
         targets = {}
         for leg_name in self.__kinematics.LEGS:
-            targets[leg_name] = (self.__kinematics.standing_target_onefoot(leg_name,self.__stand_height))
+            targets[leg_name] = (self.__kinematics.standing_target_onefoot(leg_name,self.__stand_height,))
         return targets
 
-    def __FORWARD_OR_BACKWARD(self, direction , t):
+    def __FORWARD_OR_BACKWARD(self, direction, t):
         """
-        Handle the forward action or backward action.
+        Walk along X.
+
+        direction: +1 forward, -1 backward
         """
-        targets = {}
         if direction == 1:
             walk_order = PARAM_GAIT.FORWARD_ORDER
         else:
             walk_order = PARAM_GAIT.BACKWARD_ORDER
 
-        swing_index = min(int(t / self.__swing_duration), len(walk_order) - 1)
-        swing_time  = t - swing_index * self.__swing_duration
-        swing_progress = self.__timingLaw(swing_time , self.__swing_duration , 0.0 , 1.0)
-        trunk_offset_x = direction * self.__step_length * (swing_index + swing_progress) / len(walk_order)
+        step_displacement = np.array([direction * self.__step_length, 0.0, 0.0])
+        return self.__walk(t, walk_order, step_displacement)
 
-        for leg_index, leg_name in enumerate(walk_order):
-            if leg_index < swing_index:            
-                foot_offset_x = direction * self.__step_length
-                foot_lift = 0.0
-            elif leg_index == swing_index:
-                foot_offset_x = direction * self.__step_length * swing_progress
-                foot_lift = 4.0 * self.__step_height * swing_progress * (1.0 - swing_progress)
-            else:
-                foot_offset_x = 0.0
-                foot_lift = 0.0
-            standing = self.__kinematics.standing_target_onefoot(leg_name, self.__stand_height)
-            targets[leg_name] = standing + np.array([foot_offset_x - trunk_offset_x, 0.0, foot_lift])
-            # targets[leg_name] = Point32(
-            #     x=float(standing[0] + foot_offset_x - trunk_offset_x),
-            #     y=float(standing[1]),
-            #     z=float(standing[2] + foot_lift),
-            # )
-        return targets
+    def __MOVE_LEFT_OR_MOVE_RIGHT(self, direction, t):
+        """
+        Walk along Y.
 
-    def __MOVE_LEFT_OR_MOVE_RIGHT(self , direction , t):
+        direction: +2 left, -2 right
         """
-        Handle the move left action or move right action.
-        """
+        if direction == 2:
+            walk_order = PARAM_GAIT.LEFT_ORDER
+        else:
+            walk_order = PARAM_GAIT.RIGHT_ORDER
 
-    def __TURN_LEFT_OR_TURN_RIGHT(self , direction , t):
-        """
-        Handle the turn left action or turn right action.
-        """
+        step_displacement = np.array([0.0,direction * self.__side_step_length,0.0])
+        return self.__walk(t, walk_order, step_displacement)
 
-    def __CROUCH(self):
+    def __TURN_LEFT_OR_TURN_RIGHT(self, direction, t):
         """
-        Handle the crouch action.
-        """
+        Turn around the trunk Z axis without planned translation.
 
-    def __STAND(self):
+        direction: +3 left, -3 right
         """
-        Handle the stand action.
-        """
+        if direction == 3:
+            walk_order = PARAM_GAIT.TURN_LEFT_ORDER
+            turn_angle = 1 * self.__turn_angle
+        else:
+            walk_order = PARAM_GAIT.TURN_RIGHT_ORDER
+            turn_angle = -1 * self.__turn_angle
 
+        return self.__walk(t, walk_order, np.zeros(3),turn_angle)
         

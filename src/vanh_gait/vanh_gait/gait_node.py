@@ -89,8 +89,8 @@ class Gait_Node(Node):
 
         msg = JointState()
         msg.positions = joint_angles
-        self.get_logger().debug(f"PUBLISHED {len(joint_angles)} joint angles: {joint_angles}")
         self.__cmd_pub.publish(msg)
+        self.get_logger().info(f"Pub:topic /joint_command",throttle_duration_sec=2.0)
 
 def main(args=None):
     rclpy.init(args=args)
