@@ -18,11 +18,11 @@ class PARAM_GAIT:
     SWING_DURATION = 0.5     
 
     # Joint order
-    FORWARD_ORDER  = ['BL', 'FL', 'BR', 'FR']
-    BACKWARD_ORDER = ['FR', 'BR', 'FL', 'BL']
-    LEFT_ORDER  = ['BL', 'FL', 'BR', 'FR']
-    RIGHT_ORDER = ['BR', 'FR', 'BL', 'FL']
-    TURN_LEFT_ORDER = ['FR', 'FL', 'BL', 'BR']
+    FORWARD_ORDER    = ['BL', 'FL', 'BR', 'FR']
+    BACKWARD_ORDER   = ['FR', 'BR', 'FL', 'BL']
+    LEFT_ORDER       = ['BL', 'FL', 'BR', 'FR']
+    RIGHT_ORDER      = ['BR', 'FR', 'BL', 'FL']
+    TURN_LEFT_ORDER  = ['FR', 'FL', 'BL', 'BR']
     TURN_RIGHT_ORDER = ['FL', 'FR', 'BR', 'BL']
 
 class GAIT_STATE:
@@ -43,12 +43,6 @@ class GAIT_STATE:
         self.__cycle_time = 0.0
 
     # METHOD
-    def __islimitStepLength(self,start_position, end_position):
-        """
-        Limit the step length based on requested step_length.
-        """
-        return True
-        
     def __FuncGeometry_path(self, x_time , start_position , end_position):
         """
         Func the geometry path of the foot in the trunk frame.
